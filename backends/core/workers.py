@@ -256,20 +256,21 @@ class BQQueryLauncher(BQWorker):
   PARAMS = [
       ('query', 'sql', True, '', 'Query'),
       ('bq_project_id', 'string', False, '', 'BQ Project ID'),
-      ('bq_dataset_id', 'string', True, '', 'BQ Dataset ID'),
-      ('bq_table_id', 'string', True, '', 'BQ Table ID'),
-      ('overwrite', 'boolean', True, False, 'Overwrite table'),
+      ('bq_dataset_id', 'string', False, '', 'BQ Dataset ID'),
+      ('bq_table_id', 'string', False, '', 'BQ Table ID'),
+      ('overwrite', 'boolean', False, False, 'Overwrite table'),
   ]
 
   def _execute(self):
     self._bq_setup()
     job = self._client.run_async_query(self._job_name, self._params['query'])
-    job.destination = self._table
     job.use_legacy_sql = False
-    if self._params['overwrite']:
-      job.write_disposition = 'WRITE_TRUNCATE'
-    else:
-      job.write_disposition = 'WRITE_APPEND'
+    if self._params['bq_table_id'] != "" or self._params['bq_table_id'] is not None:
+        job.destination = self._table
+        if self._params['overwrite']:
+          job.write_disposition = 'WRITE_TRUNCATE'
+        else:
+          job.write_disposition = 'WRITE_APPEND'
     self._begin_and_wait(job)
 
 
